@@ -1,0 +1,306 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1yLbHj5QqjvjNg8cgNDlM39jiU3PZfQtvunEqPGIZGeE",
+          "mode": "list",
+          "cachedResultName": "Lead responses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yLbHj5QqjvjNg8cgNDlM39jiU3PZfQtvunEqPGIZGeE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2084993753,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yLbHj5QqjvjNg8cgNDlM39jiU3PZfQtvunEqPGIZGeE/edit#gid=2084993753"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "125c63f6-5d8e-449c-8529-a4e77dbfccfa",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "LJ7kshNVtE3utPEu",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=AIzaSyBco4O97i9FKezF-40qUMICt735zwQmIEI",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"You are an AI lead qualifier. Analyze this lead's info:\\n\\nService:{{ $json['Service interested in:'] }} \\nBudget:{{ $json['Estimated Budget'] }}}}\\nTimeline:{{ $json['  When would you like to start?  '] }} \\nMessage:{{ $json['Tell us more about your project '] }} \\n\\nClassify this lead as Hot, Warm, or Cold. Explain your reasoning briefly.\"\n        }\n      ]\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "d9ceface-e9ed-44e8-9276-3a015b3f1cd5",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const fullText = item.json[\"candidates\"][0][\"content\"][\"parts\"][0][\"text\"] || \"\";\n\n  // Match first word: Hot, Warm, or Cold (with or without markdown **)\n  const match = fullText.match(/\\**(Hot|Warm|Cold)\\**/i);\n\n  const classification = match ? match[1] : \"Unknown\";\n\n  return {\n    json: {\n      ...item.json,\n      lead_score: fullText,\n      lead_level: classification\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "cd610a4e-a887-463e-a69b-74646d936d88",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1yLbHj5QqjvjNg8cgNDlM39jiU3PZfQtvunEqPGIZGeE",
+          "mode": "list",
+          "cachedResultName": "Lead responses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yLbHj5QqjvjNg8cgNDlM39jiU3PZfQtvunEqPGIZGeE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2084993753,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1yLbHj5QqjvjNg8cgNDlM39jiU3PZfQtvunEqPGIZGeE/edit#gid=2084993753"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_score": "={{ $json[\"lead_score\"] }}",
+            "lead_level": "={{ $json[\"lead_level\"] }}",
+            "Timestamp": "={{ $('Google Sheets Trigger').item.json.Timestamp }}"
+          },
+          "matchingColumns": [
+            "Timestamp"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "  Full Name  ",
+              "displayName": "  Full Name  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email Address ",
+              "displayName": "Email Address ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company / Organization (Optional) ",
+              "displayName": "Company / Organization (Optional) ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Service interested in:",
+              "displayName": "Service interested in:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Estimated Budget",
+              "displayName": "Estimated Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "  When would you like to start?  ",
+              "displayName": "  When would you like to start?  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Tell us more about your project ",
+              "displayName": "Tell us more about your project ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "  Preferred contact method  ",
+              "displayName": "  Preferred contact method  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "lead_score",
+              "displayName": "lead_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_level",
+              "displayName": "lead_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        660,
+        0
+      ],
+      "id": "7037d9dd-0887-41bc-ac79-923391de974f",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lE48snOvBBSVV2zd",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0d4ceb06-d2c0-473c-9364-185774088c93",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2dc4900e0a3b680d5262b0295852ccd117ba06f11904d6fd9a0fdf34655c4c80"
+  },
+  "id": "h2zzGQMAwggKCRr3",
+  "tags": []
+}
